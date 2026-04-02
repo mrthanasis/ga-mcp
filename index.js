@@ -12,13 +12,6 @@ const analyticsClient = new BetaAnalyticsDataClient({ credentials });
 const PROPERTY_ID = process.env.GA_PROPERTY_ID;
 const API_KEY = process.env.API_KEY;
 
-// Auth middleware
-app.use((req, res, next) => {
-  if (req.headers["x-api-key"] !== API_KEY) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-  next();
-});
 
 function createServer() {
   const server = new Server(
