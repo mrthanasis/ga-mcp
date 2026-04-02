@@ -1,17 +1,15 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { BetaAnalyticsDataClient } from "@google-analytics/data";
-import { readFileSync } from "fs";
 import express from "express";
 
 const app = express();
+app.use(express.json());
 
 const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
 const analyticsClient = new BetaAnalyticsDataClient({ credentials });
 const PROPERTY_ID = process.env.GA_PROPERTY_ID;
-const API_KEY = process.env.API_KEY;
-
 
 function createServer() {
   const server = new Server(
@@ -115,15 +113,11 @@ function createServer() {
   return server;
 }
 
-// SSE endpoint
-app.get("/sse", async (req, res) => {
-  const transport = new SSEServerTransport("/messages", res);
+app.post("/mcp", async (req, res) => {
+  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
   const server = createServer();
   await server.connect(transport);
-});
-
-app.post("/messages", express.json(), async (req, res) => {
-  res.json({ ok: true });
+  await transport.handleRequest(req, res, req.body);
 });
 
 app.get("/health", (_, res) => res.json({ status: "ok" }));
